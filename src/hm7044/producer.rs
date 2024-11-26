@@ -23,7 +23,15 @@ impl Producer for Hm7044 {
     }
 
     fn props(&self) -> panduza_platform_core::Props {
-        panduza_platform_core::Props::default()
+        let mut props = panduza_platform_core::Props::default();
+
+        props.add_string_prop(
+            "serial_port_name",
+            "Set if you want to set a specific port name, else leave empty",
+            "",
+        );
+
+        props
     }
 
     fn produce(&self) -> Result<Box<dyn DriverOperations>, panduza_platform_core::Error> {

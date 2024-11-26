@@ -1,8 +1,12 @@
+mod driver;
+mod identity;
+
 use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
 
+use driver::Hm7044Driver;
 // use crate::common::driver::KoradDriver;
 use panduza_platform_core::drivers::serial::eol::Driver as SerialEolDriver;
 use panduza_platform_core::drivers::serial::Settings as SerialSettings;
@@ -80,20 +84,22 @@ impl Hm7044Device {
         Ok(())
     }
 
-    //
-    // pub fn mount_driver(&mut self) -> Result<Arc<Mutex<KoradDriver<SerialEolDriver>>>, Error> {
-    //     //
-    //     // Recover settings
-    //     let settings = self.serial_settings.as_ref().ok_or(Error::BadSettings(
-    //         "Serial Settings not provided".to_string(),
-    //     ))?;
+    ///
+    ///
+    ///
+    pub fn mount_driver(&mut self) -> Result<Arc<Mutex<Hm7044Driver<SerialEolDriver>>>, Error> {
+        //
+        // Recover settings
+        let settings = self.serial_settings.as_ref().ok_or(Error::BadSettings(
+            "Serial Settings not provided".to_string(),
+        ))?;
 
-    //     let driver = SerialEolDriver::open(settings, vec![b'\n'])?;
+        let driver = SerialEolDriver::open(settings, vec![b'\r'])?;
 
-    //     let kdriver = KoradDriver::new(driver);
+        let kdriver = Hm7044Driver::new(driver);
 
-    //     Ok(Arc::new(Mutex::new(kdriver)))
-    // }
+        Ok(Arc::new(Mutex::new(kdriver)))
+    }
 }
 
 #[async_trait]
@@ -101,7 +107,7 @@ impl DriverOperations for Hm7044Device {
     ///
     ///
     ///
-    async fn mount(&mut self, instance: Instance) -> Result<(), Error> {
+    async fn mount(&mut self, mut instance: Instance) -> Result<(), Error> {
         //
         // Init logger
         self.logger = Some(instance.logger.clone());
@@ -112,10 +118,19 @@ impl DriverOperations for Hm7044Device {
 
         //
         //
-        // self.prepare_settings(instance.clone()).await?;
+        self.prepare_settings(instance.clone()).await?;
 
-        // let driver = self.mount_driver()?;
+        let driver = self.mount_driver()?;
 
+        identity::mount(instance.clone(), driver.clone()).await?;
+
+        //
+        //
+        let class_channel = instance.create_class("channel").finish();
+
+        //
+        //
+        for channel_num in 0..4 {}
         // channel
         //    0
         //    1

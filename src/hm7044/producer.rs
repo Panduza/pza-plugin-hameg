@@ -11,15 +11,15 @@ impl Hm7044 {
 
 impl Producer for Hm7044 {
     fn manufacturer(&self) -> String {
-        "korad".to_string()
+        "hameg".to_string()
     }
 
     fn model(&self) -> String {
-        "Hm7044".to_string()
+        "HM7044".to_string()
     }
 
     fn description(&self) -> String {
-        "Driver for Hm7044 Power Supply".to_string()
+        "Driver for HM7044 Power Supply".to_string()
     }
 
     fn props(&self) -> panduza_platform_core::Props {

@@ -10,7 +10,7 @@ crate-type = ["lib", "cdylib"]
 [dependencies]
 
 # The panduza core library
-panduza-platform-core = { git = "https://github.com/Panduza/panduza-platform-core", branch = "main", features = [
+panduza-platform-core = { git = "https://github.com/Panduza/panduza-platform-core", branch = "improvements", features = [
     "log",
     "serial",
 ] }

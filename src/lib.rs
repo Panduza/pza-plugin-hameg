@@ -1,3 +1,4 @@
+#[cfg(feature = "plugin")]
 panduza_platform_core::plugin_interface!("hameg");
 
 // pub mod common;

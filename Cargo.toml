@@ -43,3 +43,5 @@ prost-build = { version = "0.13.1" }
 
 # Enable tracing in stdout
 log = []
+
+plugin = []

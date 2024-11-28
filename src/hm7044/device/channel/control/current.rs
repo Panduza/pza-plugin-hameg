@@ -67,7 +67,7 @@ async fn on_command<SD: AsciiCmdRespProtocol>(
         match command_result {
             Ok(v) => {
                 log_info!(logger, "'control/current' - command received '{:?}'", v);
-                driver.lock().await.set_current(channel_id, v);
+                driver.lock().await.set_current(channel_id, v).await?;
                 // driver.lock().await.set_iset(v).await?;
                 att_server.set_from_f32(v).await?;
                 driver.lock().await.refresh_status().await?;

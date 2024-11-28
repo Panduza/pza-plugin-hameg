@@ -10,7 +10,7 @@ use tokio::sync::Mutex;
 ///
 ///
 pub async fn mount<SD: AsciiCmdRespProtocol + 'static>(
-    mut instance: Instance,
+    instance: Instance,
     mut parent_class: Class,
     channel_id: usize,
     driver: Arc<Mutex<Hm7044Driver<SD>>>,

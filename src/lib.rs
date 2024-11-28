@@ -4,7 +4,7 @@ panduza_platform_core::plugin_interface!("hameg");
 mod hm7044;
 // mod kd3005p;
 // mod kd3005p_fake;
-// mod scanner;
+mod scanner;
 
 // Export the producers of the plugin
 //
@@ -18,6 +18,6 @@ pub fn plugin_producers() -> Vec<Box<dyn Producer>> {
 //
 pub fn plugin_scanners() -> Vec<Box<dyn Scanner>> {
     let mut scanners: Vec<Box<dyn Scanner>> = vec![];
-    // scanners.push(scanner::KoradScanner::default().boxed());
+    scanners.push(scanner::HamegScanner::default().boxed());
     return scanners;
 }

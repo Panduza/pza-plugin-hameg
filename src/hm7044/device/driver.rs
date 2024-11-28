@@ -155,7 +155,7 @@ impl<SD: AsciiCmdRespProtocol> Hm7044Driver<SD> {
             "OFF".to_string()
         };
 
-        let ans = self.device.ask(&cmd).await?;
+        let _ans = self.device.ask(&cmd).await?;
 
         Ok(())
     }
@@ -172,7 +172,7 @@ impl<SD: AsciiCmdRespProtocol> Hm7044Driver<SD> {
             "DIS".to_string()
         };
 
-        let ans = self.device.ask(&cmd).await?;
+        let _ans = self.device.ask(&cmd).await?;
 
         // format!("output {}\r", if enable { "enabled" } else { "disabled" }),
 

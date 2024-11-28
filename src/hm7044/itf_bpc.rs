@@ -137,28 +137,6 @@ impl Hm7044BpcActions {
             )
             .await;
     }
-
-    async fn set_on_off(&mut self, on: bool) -> Result<(), PlatformError> {
-        return self
-            .send_cmd_expect_answer(
-                format!("{}\r", if on { "ON" } else { "OFF" }).as_bytes(),
-                format!(
-                    "channel {} {}\r",
-                    (self.channel as usize) + 1,
-                    if on { "on" } else { "off" }
-                ),
-            )
-            .await;
-    }
-
-    async fn set_output_enable(&mut self, enable: bool) -> Result<(), PlatformError> {
-        return self
-            .send_cmd_expect_answer(
-                format!("{}\r", if enable { "EN" } else { "DIS" }).as_bytes(),
-                format!("output {}\r", if enable { "enabled" } else { "disabled" }),
-            )
-            .await;
-    }
 }
 
 #[async_trait]

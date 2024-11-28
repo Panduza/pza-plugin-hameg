@@ -123,7 +123,9 @@ impl DriverOperations for Hm7044Device {
 
         let driver = self.mount_driver()?;
 
+        driver.lock().await.set_global_output_enable(true).await?;
         driver.lock().await.refresh_status().await?;
+
         // println!("{:?}", driver.lock().await.voltages);
 
         identity::mount(instance.clone(), driver.clone()).await?;

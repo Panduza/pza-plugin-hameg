@@ -12,8 +12,8 @@ pub struct Hm7044Driver<SD> {
     device: SD,
 
     pub channel_number: usize,
-    pub voltages: Vec<f64>,
-    pub currents: Vec<f64>,
+    pub voltages: Vec<f32>,
+    pub currents: Vec<f32>,
     pub enables: Vec<bool>,
 }
 
@@ -83,11 +83,21 @@ impl<SD: AsciiCmdRespProtocol> Hm7044Driver<SD> {
             };
         }
 
-        // let current_str = currents[self.channel as usize];
-        // let current = match current_str[..current_str.len() - 1].parse() {
-        //     Ok(v) => v,
-        //     Err(_e) => return platform_error_result!("Unexpected answer from HM7044."),
-        // };
+        //
+        //
+        for c in 0..self.channel_number {
+            let current_str = currents[c];
+            match current_str[..current_str.len() - 1].parse() {
+                Ok(v) => self.currents[c] = v,
+                Err(e) => {
+                    return Err(format_driver_error!(
+                        "Cannot convert current value into f64 from HM7044 '{:?}' ({:?})",
+                        current_str,
+                        e
+                    ));
+                }
+            };
+        }
 
         let reg = Regex::new(r"(?i:CV|CC|OFF)");
         let extract: Vec<String> = reg
@@ -112,173 +122,84 @@ impl<SD: AsciiCmdRespProtocol> Hm7044Driver<SD> {
         Ok(())
     }
 
-    async fn select_channel(&mut self, channel: u32) -> Result<(), Error> {
+    pub async fn select_channel(&mut self, channel: usize) -> Result<(), Error> {
         let ans = self.device.ask(&format!("SEL {}\r", channel + 1)).await?;
 
-        if ans != format!("channel {} selected\r", channel + 1) {
-            return Err(Error::DriverError(format!("Bad answer {:?}", ans)));
+        if ans != format!("channel {} selected", channel + 1) {
+            return Err(Error::DriverError(format!(
+                "Bad answer {:?} / for channel {:?}",
+                ans, channel
+            )));
         }
 
         Ok(())
     }
 
-    // ///
-    // /// Control current getter
-    // ///
-    // pub async fn get_iset(&mut self) -> Result<f32, Error> {
-    //     let cmd = "ISET1?".to_string();
-    //     let response = self.driver.ask(&cmd).await?;
+    ///
+    ///
+    ///
+    pub async fn set_channel_output_enable(
+        &mut self,
+        channel: usize,
+        on: bool,
+    ) -> Result<(), Error> {
+        //
+        //
+        self.select_channel(channel).await?;
 
-    //     let value = response
-    //         .parse::<f32>()
-    //         .map_err(|e| Error::Generic(format!("{:?}", e)))?;
+        //
+        //
+        let cmd = if on {
+            "ON".to_string()
+        } else {
+            "OFF".to_string()
+        };
 
-    //     Ok(value)
-    // }
+        let ans = self.device.ask(&cmd).await?;
 
-    // ///
-    // /// Control current getter
-    // ///
-    // pub async fn set_iset(&mut self, value: f32) -> Result<(), Error> {
-    //     let cmd = format!("ISET1:{:.3}", value);
-    //     self.driver.send(&cmd).await
-    // }
+        Ok(())
+    }
 
-    // ///
-    // /// Control current getter
-    // ///
-    // pub async fn get_vset(&mut self) -> Result<f32, Error> {
-    //     let cmd = "VSET1?".to_string();
-    //     let response = self.driver.ask(&cmd).await?;
+    ///
+    ///
+    ///
+    pub async fn set_global_output_enable(&mut self, enable: bool) -> Result<(), Error> {
+        //
+        //
+        let cmd = if enable {
+            "EN".to_string()
+        } else {
+            "DIS".to_string()
+        };
 
-    //     let value = response
-    //         .parse::<f32>()
-    //         .map_err(|e| Error::Generic(format!("{:?}", e)))?;
+        let ans = self.device.ask(&cmd).await?;
 
-    //     Ok(value)
-    // }
+        // format!("output {}\r", if enable { "enabled" } else { "disabled" }),
 
-    // ///
-    // /// Control current getter
-    // ///
-    // pub async fn set_vset(&mut self, value: f32) -> Result<(), Error> {
-    //     let cmd = format!("VSET1:{:.2}", value);
-    //     self.driver.send(&cmd).await
-    // }
+        Ok(())
+    }
 
-    // ///
-    // ///
-    // ///
-    // pub async fn get_iout(&mut self) -> Result<f32, Error> {
-    //     let cmd = "IOUT1?".to_string();
-    //     let response = self.driver.ask(&cmd).await?;
-    //     let value = response
-    //         .parse::<f32>()
-    //         .map_err(|e| Error::Generic(format!("{:?}", e)))?;
-    //     Ok(value)
-    // }
+    pub async fn set_voltage(&mut self, channel: usize, voltage: f32) -> Result<(), Error> {
+        //
+        //
+        self.select_channel(channel).await?;
 
-    // ///
-    // ///
-    // ///
-    // pub async fn get_vout(&mut self) -> Result<f32, Error> {
-    //     let cmd = "VOUT1?".to_string();
-    //     let response = self.driver.ask(&cmd).await?;
-    //     let value = response
-    //         .parse::<f32>()
-    //         .map_err(|e| Error::Generic(format!("{:?}", e)))?;
-    //     Ok(value)
-    // }
+        //
+        //
+        let _ans = self.device.ask(&format!("SET {:.2} V\r", voltage)).await?;
 
-    // ///
-    // ///
-    // ///
-    // pub async fn set_out(&mut self, value: bool) -> Result<(), Error> {
-    //     match value {
-    //         true => {
-    //             let cmd = "OUT1".to_string();
-    //             self.driver.send(&cmd).await
-    //         }
-    //         false => {
-    //             let cmd = "OUT0".to_string();
-    //             self.driver.send(&cmd).await
-    //         }
-    //     }
-    // }
+        Ok(())
+    }
 
-    // ///
-    // ///
-    // ///
-    // pub async fn get_out(&mut self) -> Result<bool, Error> {
-    //     let cmd = "STATUS?".to_string();
-    //     let response = self.driver.ask(&cmd).await?;
-    //     let byte = response.as_bytes()[0];
-    //     if (byte & (1 << 6)) == 0 {
-    //         Ok(false)
-    //     } else {
-    //         Ok(true)
-    //     }
-    // }
+    pub async fn set_current(&mut self, channel: usize, current: f32) -> Result<(), Error> {
+        //
+        //
+        self.select_channel(channel).await?;
 
-    // ///
-    // ///
-    // ///
-    // pub async fn set_beep(&mut self, value: bool) -> Result<(), Error> {
-    //     match value {
-    //         true => {
-    //             let cmd = "BEEP1".to_string();
-    //             self.driver.send(&cmd).await
-    //         }
-    //         false => {
-    //             let cmd = "BEEP0".to_string();
-    //             self.driver.send(&cmd).await
-    //         }
-    //     }
-    // }
+        //
+        //
+        let _ans = self.device.ask(&format!("SET {:.3} A\r", current)).await?;
 
-    // ///
-    // ///
-    // ///
-    // pub async fn get_beep(&mut self) -> Result<bool, Error> {
-    //     let cmd = "STATUS?".to_string();
-    //     let response = self.driver.ask(&cmd).await?;
-    //     let byte = response.as_bytes()[0];
-    //     if (byte & (1 << 4)) == 0 {
-    //         Ok(false)
-    //     } else {
-    //         Ok(true)
-    //     }
-    // }
-
-    // ///
-    // ///
-    // ///
-    // pub async fn set_ocp(&mut self, value: bool) -> Result<(), Error> {
-    //     match value {
-    //         true => {
-    //             let cmd = "OCP1".to_string();
-    //             self.driver.send(&cmd).await
-    //         }
-    //         false => {
-    //             let cmd = "OCP0".to_string();
-    //             self.driver.send(&cmd).await
-    //         }
-    //     }
-    // }
-
-    // ///
-    // ///
-    // ///
-    // pub async fn set_ovp(&mut self, value: bool) -> Result<(), Error> {
-    //     match value {
-    //         true => {
-    //             let cmd = "OVP1".to_string();
-    //             self.driver.send(&cmd).await
-    //         }
-    //         false => {
-    //             let cmd = "OVP0".to_string();
-    //             self.driver.send(&cmd).await
-    //         }
-    //     }
-    // }
+        Ok(())
+    }
 }

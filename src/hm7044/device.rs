@@ -1,3 +1,4 @@
+mod channel;
 mod driver;
 mod identity;
 
@@ -96,7 +97,7 @@ impl Hm7044Device {
 
         let driver = SerialEolDriver::open(settings, vec![b'\r'])?;
 
-        let kdriver = Hm7044Driver::new(driver);
+        let kdriver = Hm7044Driver::new(driver, 4);
 
         Ok(Arc::new(Mutex::new(kdriver)))
     }
@@ -122,6 +123,9 @@ impl DriverOperations for Hm7044Device {
 
         let driver = self.mount_driver()?;
 
+        driver.lock().await.refresh_status().await?;
+        // println!("{:?}", driver.lock().await.voltages);
+
         identity::mount(instance.clone(), driver.clone()).await?;
 
         //
@@ -130,12 +134,15 @@ impl DriverOperations for Hm7044Device {
 
         //
         //
-        for channel_num in 0..4 {}
-        // channel
-        //    0
-        //    1
-        //    2
-        //    3
+        for channel_id in 0..4 {
+            channel::mount(
+                instance.clone(),
+                class_channel.clone(),
+                channel_id,
+                driver.clone(),
+            )
+            .await?;
+        }
 
         // crate::common::real::identity::mount(instance.clone(), driver.clone()).await?;
         // crate::common::real::control::mount(instance.clone(), driver.clone()).await?;

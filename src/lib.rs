@@ -3,10 +3,7 @@ use panduza_platform_core::{Producer, Scanner};
 #[cfg(feature = "plugin")]
 panduza_platform_core::plugin_interface!("hameg");
 
-// pub mod common;
 mod hm7044;
-// mod kd3005p;
-// mod kd3005p_fake;
 mod scanner;
 
 // Export the producers of the plugin

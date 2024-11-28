@@ -1,3 +1,5 @@
+use panduza_platform_core::{Producer, Scanner};
+
 #[cfg(feature = "plugin")]
 panduza_platform_core::plugin_interface!("hameg");
 

@@ -1,12 +1,12 @@
 use async_trait::async_trait;
-use panduza_core::FunctionResult as PlatformFunctionResult;
-use panduza_core::Error as PlatformError;
-use panduza_core::meta::bpc::{self, BpcAttributes};
-use panduza_core::interface::AmInterface;
 use panduza_core::interface::builder::Builder as InterfaceBuilder;
+use panduza_core::interface::AmInterface;
+use panduza_core::meta::bpc::{self, BpcAttributes};
+use panduza_core::Error as PlatformError;
+use panduza_core::FunctionResult as PlatformFunctionResult;
 
-use panduza_connectors::serial::tty::{self, TtyConnector};
 use panduza_connectors::serial::tty::Config as SerialConfig;
+use panduza_connectors::serial::tty::{self, TtyConnector};
 use panduza_core::platform_error_result;
 
 use regex::Regex;
@@ -21,27 +21,28 @@ pub enum Hm7044Channel {
     Channel1,
     Channel2,
     Channel3,
-    Channel4
+    Channel4,
 }
 
 struct Hm7044BpcActions {
     connector_tty: tty::TtyConnector,
     serial_config: SerialConfig,
     time_lock_duration: Option<tokio::time::Duration>,
-    channel: Hm7044Channel
+    channel: Hm7044Channel,
 }
 
 impl Hm7044BpcActions {
     async fn send_cmd_read_answer(&mut self, command: &[u8]) -> Result<String, PlatformError> {
-
         let mut response: &mut [u8] = &mut [0; 1024];
-        let response_len = match self.connector_tty.write_then_read(
-            command,
-            &mut response,
-            self.time_lock_duration
-        ).await {
+        let response_len = match self
+            .connector_tty
+            .write_then_read(command, &mut response, self.time_lock_duration)
+            .await
+        {
             Ok(val) => val,
-            Err(_e) => {return platform_error_result!("Failed to read and write.");}
+            Err(_e) => {
+                return platform_error_result!("Failed to read and write.");
+            }
         };
 
         let pp: &[u8] = &response[0..response_len];
@@ -54,8 +55,11 @@ impl Hm7044BpcActions {
         return Ok(String::from_utf8(pp.to_vec()).unwrap());
     }
 
-    async fn send_cmd_expect_answer(&mut self, command: &[u8], expected_answer: String) -> Result<(), PlatformError> {
-
+    async fn send_cmd_expect_answer(
+        &mut self,
+        command: &[u8],
+        expected_answer: String,
+    ) -> Result<(), PlatformError> {
         let response = self.send_cmd_read_answer(command).await?;
 
         if response == expected_answer {
@@ -68,96 +72,78 @@ impl Hm7044BpcActions {
         }
     }
 
-    async fn get_status(&mut self) -> Result<(f64, f64, bool), PlatformError> {
+    // async fn get_status(&mut self) -> Result<(f64, f64, bool), PlatformError> {
 
-        let sss = self.send_cmd_read_answer(b"READ\r").await?;
-        let v_a_e: Vec<&str> = sss.split(';').collect();
-        if v_a_e.len() != 3 {
-            return platform_error_result!("Unexpected answer from HM7044.")
-        }
-        let voltages: Vec<&str> = v_a_e[0][..v_a_e[0].len() - 1].split(' ').collect();
-        let currents: Vec<&str> = v_a_e[1][..v_a_e[1].len() - 1].split(' ').collect();
-        if voltages.len() != 4 || currents.len() != 4 {
-            return platform_error_result!("Unexpected answer from HM7044.")
-        }
+    //     let sss = self.send_cmd_read_answer(b"READ\r").await?;
+    //     let v_a_e: Vec<&str> = sss.split(';').collect();
+    //     if v_a_e.len() != 3 {
+    //         return platform_error_result!("Unexpected answer from HM7044.")
+    //     }
+    //     let voltages: Vec<&str> = v_a_e[0][..v_a_e[0].len() - 1].split(' ').collect();
+    //     let currents: Vec<&str> = v_a_e[1][..v_a_e[1].len() - 1].split(' ').collect();
+    //     if voltages.len() != 4 || currents.len() != 4 {
+    //         return platform_error_result!("Unexpected answer from HM7044.")
+    //     }
 
-        let voltage_str = voltages[self.channel as usize];
-        let voltage = match voltage_str[..voltage_str.len() - 1].parse() {
-            Ok(v) => v,
-            Err(_e) => {return platform_error_result!("Unexpected answer from HM7044.") }
-        };
+    //     let voltage_str = voltages[self.channel as usize];
+    //     let voltage = match voltage_str[..voltage_str.len() - 1].parse() {
+    //         Ok(v) => v,
+    //         Err(_e) => {return platform_error_result!("Unexpected answer from HM7044.") }
+    //     };
 
-        let current_str = currents[self.channel as usize];
-        let current = match current_str[..current_str.len() - 1].parse() {
-            Ok(v) => v,
-            Err(_e) => {return platform_error_result!("Unexpected answer from HM7044.") }
-        };
+    //     let current_str = currents[self.channel as usize];
+    //     let current = match current_str[..current_str.len() - 1].parse() {
+    //         Ok(v) => v,
+    //         Err(_e) => {return platform_error_result!("Unexpected answer from HM7044.") }
+    //     };
 
-        let reg = Regex::new(r"(?i:CV|CC|OFF)");
-        let extract: Vec<String> = reg
-            .unwrap()
-            .captures_iter(v_a_e[2])
-            .map(|cap| cap[0].to_string())
-            .collect();
-        let enable = match extract[self.channel as usize].as_str() {
-            "CV" | "CC" => true,
-            "OFF" => false,
-            _ => {return platform_error_result!("Unexpected answer from HM7044.");}
-        };
+    //     let reg = Regex::new(r"(?i:CV|CC|OFF)");
+    //     let extract: Vec<String> = reg
+    //         .unwrap()
+    //         .captures_iter(v_a_e[2])
+    //         .map(|cap| cap[0].to_string())
+    //         .collect();
+    //     let enable = match extract[self.channel as usize].as_str() {
+    //         "CV" | "CC" => true,
+    //         "OFF" => false,
+    //         _ => {return platform_error_result!("Unexpected answer from HM7044.");}
+    //     };
 
-        return Ok((voltage, current, enable));
-    }
+    //     return Ok((voltage, current, enable));
+    // }
 
-    async fn select_channel(&mut self) -> Result<(), PlatformError>{
-
-        return self.send_cmd_expect_answer(
-            format!("SEL {}\r", (self.channel as usize) + 1).as_bytes(),
-            format!("channel {} selected\r", (self.channel as usize) + 1))
+    async fn set_voltage(&mut self, voltage: f64) -> Result<(), PlatformError> {
+        return self
+            .send_cmd_expect_answer(
+                format!("SET {:.2} V\r", voltage).as_bytes(),
+                format!(
+                    "channel {} set to {:.2} V\r",
+                    (self.channel as usize) + 1,
+                    voltage
+                ),
+            )
             .await;
     }
 
-    async fn set_voltage(&mut self, voltage: f64) -> Result<(), PlatformError>{
-
-        return self.send_cmd_expect_answer(
-            format!("SET {:.2} V\r", voltage).as_bytes(),
-            format!("channel {} set to {:.2} V\r", (self.channel as usize) + 1, voltage))
+    async fn set_current(&mut self, voltage: f64) -> Result<(), PlatformError> {
+        return self
+            .send_cmd_expect_answer(
+                format!("SET {:.3} A\r", voltage).as_bytes(),
+                format!(
+                    "channel {} set to {:.3} A\r",
+                    (self.channel as usize) + 1,
+                    voltage
+                ),
+            )
             .await;
     }
-
-    async fn set_current(&mut self, voltage: f64) -> Result<(), PlatformError>{
-
-        return self.send_cmd_expect_answer(
-            format!("SET {:.3} A\r", voltage).as_bytes(),
-            format!("channel {} set to {:.3} A\r", (self.channel as usize) + 1, voltage))
-            .await;
-    }
-
-    async fn set_on_off(&mut self, on: bool) -> Result<(), PlatformError>{
-
-        return self.send_cmd_expect_answer(
-            format!("{}\r", if on { "ON" } else { "OFF" }).as_bytes(),
-            format!("channel {} {}\r", (self.channel as usize) + 1, if on { "on" } else { "off" }))
-            .await;
-    }
-
-    async fn set_output_enable(&mut self, enable: bool) -> Result<(), PlatformError>{
-
-        return self.send_cmd_expect_answer(
-            format!("{}\r", if enable { "EN" } else { "DIS" }).as_bytes(),
-            format!("output {}\r", if enable { "enabled" } else { "disabled" }))
-            .await;
-    }
-
 }
-
 
 #[async_trait]
 impl bpc::BpcActions for Hm7044BpcActions {
-
     /// Initialize the interface
     ///
     async fn initializating(&mut self, _interface: &AmInterface) -> PlatformFunctionResult {
-
         self.connector_tty = tty::get(&self.serial_config).await.unwrap();
         let _ = self.connector_tty.init().await;
 
@@ -173,20 +159,22 @@ impl bpc::BpcActions for Hm7044BpcActions {
     /// Read the enable value
     ///
     async fn read_enable_value(&mut self, _interface: &AmInterface) -> Result<bool, PlatformError> {
-
         // Debug
         // println!("read_enable_value");
 
         return match self.get_status().await {
             Ok((_voltage, _current, enable)) => Ok(enable),
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         };
     }
 
     /// Write the enable value
     ///
-    async fn write_enable_value(&mut self, _interface: &AmInterface, v: bool) -> PlatformFunctionResult {
-
+    async fn write_enable_value(
+        &mut self,
+        _interface: &AmInterface,
+        v: bool,
+    ) -> PlatformFunctionResult {
         // Debug
         // println!("write_enable_value");
 
@@ -202,18 +190,16 @@ impl bpc::BpcActions for Hm7044BpcActions {
     // / Read the voltage value
     // /
     async fn read_voltage_value(&mut self, _interface: &AmInterface) -> Result<f64, PlatformError> {
-
         // Debug
         // println!("read_voltage_value");
 
         return match self.get_status().await {
             Ok((voltage, _current, _enable)) => Ok(voltage),
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         };
     }
 
     async fn write_voltage_value(&mut self, _interface: &AmInterface, v: f64) {
-
         // Debug
         // println!("write_voltage_value");
 
@@ -225,18 +211,16 @@ impl bpc::BpcActions for Hm7044BpcActions {
     }
 
     async fn read_current_value(&mut self, _interface: &AmInterface) -> Result<f64, PlatformError> {
-
         // Debug
         // println!("read_current_value");
 
         return match self.get_status().await {
             Ok((_voltage, current, _enable)) => Ok(current),
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         };
     }
 
     async fn write_current_value(&mut self, _interface: &AmInterface, v: f64) {
-
         // Debug
         // println!("write_current_value");
 
@@ -248,16 +232,13 @@ impl bpc::BpcActions for Hm7044BpcActions {
     }
 }
 
-
-
 /// Interface to emulate a Bench Power Channel
 ///
 pub fn build<A: Into<String>>(
     name: A,
     serial_config: &SerialConfig,
-    channel: Hm7044Channel
+    channel: Hm7044Channel,
 ) -> InterfaceBuilder {
-
     return bpc::build(
         name,
         bpc::BpcParams {
@@ -273,9 +254,8 @@ pub fn build<A: Into<String>>(
             connector_tty: TtyConnector::new(None),
             serial_config: serial_config.clone(),
             time_lock_duration: Some(tokio::time::Duration::from_millis(100)),
-            channel: channel
+            channel: channel,
         }),
-        BpcAttributes::all_attributes()
-    )
+        BpcAttributes::all_attributes(),
+    );
 }
-

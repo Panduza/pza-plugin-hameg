@@ -10,7 +10,7 @@ crate-type = ["lib", "cdylib"]
 [dependencies]
 
 # The panduza core library
-panduza-platform-core = { git = "https://github.com/Panduza/panduza-platform-core", branch = "main", features = [
+panduza-platform-core = { git = "https://github.com/Panduza/panduza-platform-core", branch = "improvements", features = [
     "log",
     "serial",
 ] }
@@ -24,6 +24,8 @@ serde_json = "1.0.114"
 async-trait = "0.1.77"
 # Futures support
 futures = "0.3.17"
+# Regex management
+regex = "1.10.3"
 
 
 [package.metadata.cargo-post.dependencies]

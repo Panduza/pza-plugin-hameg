@@ -25,7 +25,7 @@ pub async fn mount<SD: AsciiCmdRespProtocol + 'static>(
         .create_attribute("current")
         .with_rw()
         .with_info(r#"Allow to read & write the current limit value of the power supply"#)
-        .finish_as_si("A", 0, 5, 3)
+        .finish_as_si("A", 0, 3, 3)
         .await?;
 
     //

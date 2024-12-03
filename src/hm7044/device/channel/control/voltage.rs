@@ -1,7 +1,7 @@
 use crate::hm7044::device::driver::Hm7044Driver;
 use panduza_platform_core::protocol::AsciiCmdRespProtocol;
 use panduza_platform_core::{log_info, Error, SiAttServer};
-use panduza_platform_core::{spawn_on_command, Class, DeviceLogger, Instance};
+use panduza_platform_core::{spawn_on_command, Class, InstanceLogger, Instance};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -58,7 +58,7 @@ pub async fn mount<SD: AsciiCmdRespProtocol + 'static>(
 /// control/voltage => triggered when command is received
 ///
 async fn on_command<SD: AsciiCmdRespProtocol>(
-    logger: DeviceLogger,
+    logger: InstanceLogger,
     mut att_server: SiAttServer,
     channel_id: usize,
     driver: Arc<Mutex<Hm7044Driver<SD>>>,

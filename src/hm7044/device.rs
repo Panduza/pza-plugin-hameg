@@ -12,8 +12,8 @@ use driver::Hm7044Driver;
 use panduza_platform_core::drivers::serial::eol::Driver as SerialEolDriver;
 use panduza_platform_core::drivers::serial::Settings as SerialSettings;
 use panduza_platform_core::drivers::usb::Settings as UsbSettings;
-use panduza_platform_core::{DeviceLogger, Instance};
 use panduza_platform_core::{DriverOperations, Error};
+use panduza_platform_core::{Instance, InstanceLogger};
 use serde_json::json;
 use tokio::sync::Mutex;
 use tokio::time::sleep;
@@ -28,7 +28,7 @@ static DEVICE_SERIAL_BAUDRATE: u32 = 9600; // We do not care... it is USB serial
 pub struct Hm7044Device {
     ///
     /// Device logger
-    logger: Option<DeviceLogger>,
+    logger: Option<InstanceLogger>,
     ///
     /// Serial settings to connect to the pico
     serial_settings: Option<SerialSettings>,

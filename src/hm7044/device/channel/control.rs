@@ -4,7 +4,7 @@ mod voltage;
 use crate::hm7044::device::driver::Hm7044Driver;
 use panduza_platform_core::protocol::AsciiCmdRespProtocol;
 use panduza_platform_core::{
-    spawn_on_command, BooleanAttServer, Class, DeviceLogger, Error, Instance,
+    spawn_on_command, BooleanAttServer, Class, Error, Instance, InstanceLogger,
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -79,7 +79,7 @@ pub async fn mount<SD: AsciiCmdRespProtocol + 'static>(
 ///
 ///
 async fn on_command<SD: AsciiCmdRespProtocol + 'static>(
-    logger: DeviceLogger,
+    logger: InstanceLogger,
     mut att_oe: BooleanAttServer,
     channel_id: usize,
     driver: Arc<Mutex<Hm7044Driver<SD>>>,
